@@ -1,5 +1,5 @@
 -- Original work done in Hex Notebook on data from a Snowflake database 
-  -- Result Sets from these queries can be viewed here [SaaS Payment Funnel Analysis](https://app.hex.tech/big-sql-energy/app/SaaS-Payment-Funnel-Analysis-031zyknrX3deOsTyt5LfUp/latest)
+  -- Result Sets from these queries can be viewed here https://app.hex.tech/big-sql-energy/app/SaaS-Payment-Funnel-Analysis-031zyknrX3deOsTyt5LfUp/latest
 
 -- Initial exploration of the payment data joined with definitions table 
 
