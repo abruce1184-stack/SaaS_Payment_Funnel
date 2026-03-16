@@ -1,7 +1,7 @@
 -- Original work done in Hex Notebook on data from a Snowflake database 
-  -- Result Sets from these queries can be viewed here - https://app.hex.tech/big-sql-energy/app/031zyknrX3deOsTyt5LfUp/latest
+  -- Result Sets from these queries can be viewed here [SaaS Payment Funnel Analysis](https://app.hex.tech/big-sql-energy/app/SaaS-Payment-Funnel-Analysis-031zyknrX3deOsTyt5LfUp/latest)
 
--- Intial exploration of the payment data joined with definitions table 
+-- Initial exploration of the payment data joined with definitions table 
 
 select 
     *
@@ -13,7 +13,7 @@ join
 order by    
     subscription_id
     ,movement_date
-limit 20
+limit 20;
 
 -- Intial exploration of the subscsription data
 
@@ -23,7 +23,7 @@ from
     public.subscriptions
 order by    
     subscription_id
-limit 20
+limit 20;
 
 -- Exploration of a subscription that followed the happy path to payment and still converted. 
 
@@ -38,7 +38,7 @@ where
     subscription_id = '12622'
 order by    
     subscription_id
-    ,movement_date
+    ,movement_date;
 
 -- Exploration of a subscription that did not follow the happy path and is still unpaid. This path ended in an error on the 3rd party vendor and this customer did not go through to complete payment again and has not converted. 
 
@@ -53,7 +53,7 @@ where
     subscription_id = '38499'
 order by    
     subscription_id
-    ,movement_date
+    ,movement_date;
 
 -- Exploration of a subscription that did not follow the happy path to payment but still completed payment. We can assume that this is an example of user error in entering the data since the error happened following Step 3.  
 
@@ -68,7 +68,44 @@ where
     subscription_id = '38844'
 order by    
     subscription_id
-    ,movement_date
+    ,movement_date;
+
+-- Explore timing of orders in subscription table
+
+select 
+    count(*) as num_sub
+    ,date_trunc('year',order_date) as order_year
+    ,current_payment_status
+    ,coalesce(description,'Has Not Started') as Status
+from 
+    public.subscriptions as subs    
+left join 
+    public.payment_status_definitions as def
+    on subs.current_payment_status = def.status_id
+group by 
+    2,3,4
+order by    
+    2;
+
+-- I see that there were only 5 subs 2019 and none completed payments, followed by no payments happened in 2020 or 2021, after investigating more I discovered that there was a test program started in 2019 that didn't roll out fully until 2022, as a result I decided to create a temporary susbcription table that excludes orders prior to 2022. 
+
+create or replace view junk.subs_after_2022 as 
+select 
+    *
+from 
+    public.subscriptions
+where
+    order_date >= '2022-01-01';
+
+-- Calculate and graph the number of paid vs unpaid subscriptions
+
+select 
+    count(*) as num_subs
+    ,case when current_payment_status = 5 then 'Paid' else 'Unpaid' end as payment_status
+from 
+    junk.subs_after_2022
+group by
+    payment_status;
 
 -- Identify the furthest status each subscribriber has reached.
 
@@ -81,9 +118,9 @@ join
     public.payment_status_definitions as def
     on psl.status_id = def.status_id
 group by    
-    1
+    1;
 
--- However, some subscriptions have reached a max status of 4 or 5 and could still be sitting in an error state, so we want to identify those as well.  This also does not account for subscriptions that have not started the payment process at all. 
+-- However, some subscriptions have reached a max status of 3 or 4 and could still be sitting in an error state, so we want to identify those as well.  This also does not account for subscriptions that have not started the payment process at all. 
 
 with max_status_reached as (
 select  
@@ -103,10 +140,10 @@ select
     ,current_payment_status
     ,max_status
 from 
-    public.subscriptions as subs
+    junk.subs_after_2022 as subs
 left join -- Left join used to include subscriptions that have not started payment process
     max_status_reached as msr
-    on subs.subscription_id = msr.subscription_id
+    on subs.subscription_id = msr.subscription_id;
 
 -- This exploration of the data uncovered 8 potential status that subscribers can in.
 
@@ -139,10 +176,10 @@ select
         when max_status is null then 'Has Not Started'
         end as payment_funnel_status
 from 
-    public.subscriptions as subs
+    junk.subs_after_2022 as subs
 left join -- Left join used to include subscriptions that have not started payment process
     max_status_reached as msr
-    on subs.subscription_id = msr.subscription_id
+    on subs.subscription_id = msr.subscription_id;
 
 -- Explore how many subsciptions fall into each of the status categories
 
@@ -173,7 +210,7 @@ select
         when max_status is null then 'Has Not Started'
         end as payment_funnel_status
 from 
-    public.subscriptions as subs
+    junk.subs_after_2022 as subs
 left join -- Left join used to include subscriptions that have not started payment process
     max_status_reached as msr
     on subs.subscription_id = msr.subscription_id
@@ -187,7 +224,7 @@ from
 group by    
     1
 order by 
-    2 Desc
+    2 Desc;
 
 -- Looking at the yearly breakouts
 
@@ -219,7 +256,7 @@ select
         when max_status is null then 'Has Not Started'
         end as payment_funnel_status
 from 
-    public.subscriptions as subs
+    junk.subs_after_2022 as subs
 left join -- Left join used to include subscriptions that have not started payment process
     max_status_reached as msr
     on subs.subscription_id = msr.subscription_id
@@ -234,56 +271,7 @@ from
 group by    
     1, 2
 order by
-    2
-
--- I see that there were only 5 subs 2019 and none completed payments, followed by no payments happened in 2020 or 2021, after investigating more I discovered that there was a test program started in 2019 that didn't roll out fully until 2022, as a result we have modifed the query to only inlcude data from 2021 forward. 
-
-with max_status_reached as (
-select  
-    psl.subscription_id
-    ,max(psl.status_id) as max_status
-from 
-    public.payment_status_log as psl
-join
-    public.payment_status_definitions as def
-    on psl.status_id = def.status_id
-group by    
-    1
-)
-, payment_funnel_status as (
-select  
-    subs.subscription_id
-    ,date_trunc('year',order_date) as order_year
-    ,current_payment_status
-    ,max_status
-    ,case when max_status = 1 then 'Payment Widget Opened'
-        when max_status = 2 then 'Payment Info Entered'
-        when max_status = 3 and current_payment_status = 0 then 'User Error in Payment Submission'
-        when max_status = 3 and current_payment_status != 0 then 'Payment Submitted'
-        when max_status = 4 and current_payment_status = 0 then 'Vendor Processing Error'
-        when max_status = 4 and current_payment_status !=0 then 'Payment Successful'
-        when max_status = 5 then 'Complete'
-        when max_status is null then 'Has Not Started'
-        end as payment_funnel_status
-from 
-    public.subscriptions as subs
-left join -- Left join used to include subscriptions that have not started payment process
-    max_status_reached as msr
-    on subs.subscription_id = msr.subscription_id
-)
-
-select
-    payment_funnel_status 
-    ,order_year
-    ,count (*) as num_subs
-from 
-    payment_funnel_status
-group by    
-    1, 2
-having 
-    order_year >= '2022-01-01'
-order by
-    2
+    2;
 
 -- Explolring conversion rates
 
@@ -308,12 +296,11 @@ select
     ,case when max_status = 5 then 1 else 0 end as completed_payment
     ,case when max_status is not null then 1 else 0 end as started_payment
 from 
-    public.subscriptions as subs
+    junk.subs_after_2022 as subs
 left join -- Left join used to include subscriptions that have not started payment process
     max_status_reached as msr
     on subs.subscription_id = msr.subscription_id
-having 
-    order_year >= '2022-01-01' -- removing 2019 test data
+
 )
 
 select 
@@ -328,26 +315,14 @@ from
 group by 
     grouping sets (order_year, ())
 order by 
-    order_year nulls last
+    order_year nulls last;
 
 -- Looking at Error Rate
 
-with error_subs as (
-select
-    distinct subscription_id
-from 
-    public.payment_status_log
-where   
-    status_id = 0
-)
-
 select  
-    count(err.subscription_id) * 100 / count(subs.subscription_id) as percent_subs_hit_error
+    (select count(distinct subscription_id) from public.payment_status_log where status_id = 0) * 100 / count(*) as percent_subs_hit_error
 from 
-    public.subscriptions as subs
-left join   
-    error_subs as err
-    on subs.subscription_id = err.subscription_id   
+    junk.subs_after_2022 as subs
 
 -- Error summary counts for graphing
 
@@ -365,7 +340,7 @@ select
     subs.subscription_id
     ,case when err.subscription_id is not null then 1 else 0 end as has_error
 from 
-    public.subscriptions as subs
+    junk.subs_after_2022 as subs
 left join  
     error_subs as err
     on subs.subscription_id = err.subscription_id   
@@ -378,3 +353,6 @@ from
     error_list
 group by
     error_status
+
+
+
