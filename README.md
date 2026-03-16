@@ -79,6 +79,6 @@ The finance team identified a significant volume of unpaid subscriptions and eng
 
 ---
 
-### Data Schema
+### Entity-Relationship Diagram
 
-![Data Schema](schema.png)
+![erd](erd.png)
