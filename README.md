@@ -22,8 +22,6 @@ The finance team identified a significant volume of unpaid subscriptions and eng
 3) **Funnel Classification & Analysis:** Used CASE statements, Views, and Subqueries to assign each subscription a precise payment funnel status based on recorded events. Analyzed funnel stage volumes by year (absolute and as a percentage of total), conversion rates, workflow completion rates, and error rates.
 4) **Data Visualization:** Visualized findings in Hex Notebook using pie, stacked column, and line charts to communicate current state and year-over-year trends.
 
-🔗 [View the full analysis in Hex](https://app.hex.tech/big-sql-energy/app/SaaS-Payment-Funnel-Analysis-031zyknrX3deOsTyt5LfUp/latest)
-
 ---
 
 ### Skills
