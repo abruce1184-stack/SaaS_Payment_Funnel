@@ -20,7 +20,7 @@ The finance team identified a significant volume of unpaid subscriptions and eng
 1) **Data Generation & Preparation:** A synthetic dataset was generated using ChatGPT and loaded into a Snowflake data warehouse. During initial exploration, five subscriptions from 2019 were identified as test accounts predating the product's actual launch in 2022 and were excluded from all subsequent analysis.
 2) **Exploratory Data Analysis:** Used SQL (including multi-table joins and CTEs) to explore the dataset structure, validate data integrity, and map the distinct paths a subscriber could take through the payment funnel.
 3) **Funnel Classification & Analysis:** Used CASE statements, Views, and Subqueries to assign each subscription a precise payment funnel status based on recorded events. Analyzed funnel stage volumes by year (absolute and as a percentage of total), conversion rates, workflow completion rates, and error rates.
-4) **Data Visualization:** Visualized findings in Hex Notebook using pie, stacked bar, and line charts to communicate current state and year-over-year trends.
+4) **Data Visualization:** Visualized findings in Hex Notebook using pie, stacked column, and line charts to communicate current state and year-over-year trends.
 
 🔗 [View the full analysis in Hex](https://app.hex.tech/big-sql-energy/app/SaaS-Payment-Funnel-Analysis-031zyknrX3deOsTyt5LfUp/latest)
 
