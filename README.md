@@ -69,6 +69,7 @@ The finance team identified a significant volume of unpaid subscriptions and eng
 4) **Measurement:** Build a live conversion rate dashboard to replace ad hoc reporting and enable real-time monitoring of funnel health.
 5) **Limitations:** The dataset is intentionally small, which limits the statistical power of trend analysis. Further data collection and more granular event tracking would provide deeper insights.
 
+👉 [View the full project write-up on Notion](https://charming-heat-ae5.notion.site/SaaS-Payment-Funnel-Analysis-770b743fecb883d1a15d813abfadbe77)
 ---
 
 ### Payment Funnel Map
